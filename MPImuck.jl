@@ -2,7 +2,7 @@ using MPI
 
 MPI.Init()
 
-testns = 2.^[2:26]
+testns = 2.^[2:26;]
 # testns = 2^2
 ltns = length(testns)
 
@@ -22,19 +22,19 @@ for n = testns
             MPI.Send(a, i, 2001, MPI.COMM_WORLD)
             # MPI.Recv!(a, i, 2001, MPI.COMM_WORLD)
             gc()
-            timings1[log2(n) - 1, i] = @elapsed begin
+            timings1[Int(log2(n)) - 1, i] = @elapsed begin
                 MPI.Send(a, i, 2001, MPI.COMM_WORLD)
                 # MPI.Recv!(a, i, 2001, MPI.COMM_WORLD)
             end
             MPI.send(a, i, 2001, MPI.COMM_WORLD)
             # a = MPI.recv(i, 2001, MPI.COMM_WORLD)[1]
             gc()
-            timings2[log2(n) - 1, i] = @elapsed begin
+            timings2[Int(log2(n)) - 1, i] = @elapsed begin
                 MPI.send(a, i, 2001, MPI.COMM_WORLD)
                 # a = MPI.recv(i, 2001, MPI.COMM_WORLD)[1]
             end
             gc()
-            timings3[log2(n) - 1, i] = @elapsed (copy!(tmp, a);copy!(tmp, a))
+            timings3[Int(log2(n)) - 1, i] = @elapsed (copy!(tmp, a);copy!(tmp, a))
         end
     else
         for i = 1:ps
@@ -54,10 +54,12 @@ for n = testns
 end
 
 if MPI.Comm_rank(MPI.COMM_WORLD) == 0
-    writedlm("MPImuck2.txt", hcat(
-        [fill("MPI_no_serialize", ltns), fill("MPI_serialize", ltns), fill("copy", ltns)],
-        [testns, testns, testns],
-        vcat(minimum(timings1, 2), minimum(timings2, 2), minimum(timings3, 2))))
+    outarray = hcat(
+        [fill("MPI_no_serialize", ltns), fill("MPI_serialize", ltns), fill("copy", ltns);],
+        [testns, testns, testns;],
+        vcat(minimum(timings1, 2), minimum(timings2, 2), minimum(timings3, 2)))
+    println(outarray)
+    writedlm("MPImuck2.txt", outarray)
 end
 
 

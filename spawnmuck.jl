@@ -1,7 +1,7 @@
-addprocs(4)
+addprocs(parse(Int, ARGS[1]))
 
 np = nprocs()
-testns = shuffle(2.^[0:26])
+testns = shuffle(2.^[0:26;])
 ltns = length(testns)
 tMean = Float64[]
 tStd = Float64[]
@@ -13,10 +13,12 @@ end
 
 for n in testns
     a = randn(n)
-    tmp = [@elapsed @sync @spawnat i a for i = 2:np, j = 1:3]
+    tmp = [@elapsed @sync @spawnat i a for i = workers(), j = 1:3]
     push!(tMean, mean(tmp))
     push!(tStd, std(tmp))
     push!(tMin, minimum(tmp))
 end
 
-writedlm("spawnmuck.txt", hcat(fill("@spawn", length(testns)), testns, tMean, tStd, tMin))
+outarray = hcat(fill("@spawn", length(testns)), testns, tMean, tStd, tMin)
+println(outarray)
+writedlm("spawnmuck.txt", outarray)
